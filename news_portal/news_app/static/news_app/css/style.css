@@ -1,0 +1,232 @@
+
+@import url('https://fonts.googleapis.com/css2?family=Open+Sans:wght@400;600;700&display=swap');
+
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    padding-top: 70px;
+    font-family: 'Open Sans', sans-serif;
+    margin: 0;
+    padding: 0;
+    background-color: #f5f5f5;
+    color: #333; 
+    line-height: 1.6; 
+}
+
+a {
+    color: #0056b3;
+    text-decoration: none;
+}
+
+a:hover {
+    text-decoration: underline;
+}
+
+header {
+    position: fixed;
+    top: 0;
+    width: 100%;
+    z-index: 1000;
+    background: #333;
+    color: #fff;
+    padding: 1rem 0;
+}
+
+main {
+    padding-top: 80px; 
+}
+
+header h1 {
+    margin: 0;
+}
+
+
+.add-thread-btn {
+    background-color: #28a745; 
+    border: none;
+    padding: 0.5rem 1rem;
+    border-radius: 0.3rem;
+    transition: background-color 0.3s ease;
+}
+
+.add-thread-btn:hover {
+    background-color: #218838; 
+}
+
+
+.navbar {
+    background-color: #333; 
+    padding: 0.6rem 1rem;
+}
+
+.navbar ul {
+    list-style: none;
+    padding: 0;
+}
+
+.navbar ul li {
+    display: inline;
+}
+
+.navbar ul li a {
+    color: #fff;
+    padding: 0.5rem 1rem;
+}
+
+.navbar ul li a:hover {
+    background-color: #444;
+}
+
+
+.main-container {
+    padding: 1rem;
+    max-width: 1200px; 
+    margin: 0 auto; 
+}
+
+.section {
+    margin: 2rem 0;
+}
+
+.card {
+    background-color: #fff;
+    border-radius: 0.5rem;
+    box-shadow: 0 2px 5px rgba(0, 0, 0, 0.1);
+    margin-bottom: 1rem;
+    overflow: hidden; 
+    transition: background-color 0.3s, box-shadow 0.3s; 
+
+}
+
+.card:hover {
+    background-color: #f8f9fa; 
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1); 
+    transition: background-color 0.3s, box-shadow 0.3s; 
+}
+
+.card-img-top {
+    width: 100%;
+    height: 200px; 
+    object-fit: cover; 
+}
+
+.card-body {
+    padding: 1rem;
+}
+
+.card-title {
+    margin-bottom: 0.5rem;
+    font-weight: 600; 
+}
+
+.card-text {
+    font-size: 0.9rem; 
+}
+
+
+@media (max-width: 768px) {
+    .navbar ul li a {
+        padding: 0.4rem 0.8rem; 
+    }
+}
+
+
+.pagination {
+    display: flex;
+    list-style: none;
+    padding: 0;
+}
+
+.pagination li {
+    margin: 0 0.3rem;
+}
+
+.pagination li a {
+    color: #333;
+    padding: 0.5rem;
+    border-radius: 0.3rem;
+    transition: background-color 0.3s ease;
+}
+
+.pagination li a:hover {
+    background-color: #e9ecef;
+}
+
+
+.btn-outline-success:hover {
+    background-color: #28a745; 
+    color: white; 
+    border-color: #28a745; 
+}
+
+
+.nav-link:hover, .nav-link:focus {
+    color: #ffffff; 
+    text-decoration: none; 
+    background-color: transparent; 
+}
+
+
+.btn-outline-success:hover, .btn-outline-success:focus {
+    color: #ffffff; 
+    background-color: #28a745;
+    border-color: #28a745; 
+}
+
+
+.form-control:focus {
+    border-color: #28a745; 
+    box-shadow: none; 
+}
+
+.select2-container--default .select2-selection--multiple {
+    border-radius: 4px;
+    border: 1px solid #ced4da;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background-color: #007bff;
+    border: 1px solid #006fe6;
+    color: white;
+    padding: 0 10px;
+    margin-top: .31rem;
+}
+
+.select2-container--default .select2-selection--multiple .select2-selection__choice__remove {
+    color: white;
+    cursor: pointer;
+    display: inline-block;
+    margin-right: 5px;
+}
+
+.select2-container .select2-results {
+    max-height: 400px; /* Устанавливает максимальную высоту списка результатов */
+  }
+
+  .btn-like, .btn-dislike {
+    color: #6c757d; /* Цвет по умолчанию */
+    transition: color 0.3s ease;
+}
+
+.btn-like:hover, .btn-like:focus, .btn-dislike:hover, .btn-dislike:focus {
+    color: #007bff; /* Цвет при наведении */
+    transform: scale(1.1); /* Увеличение размера при наведении */
+}
+
+.btn-like:active {
+    color: #0345fc; /* Цвет при клике на лайк */
+}
+
+.btn-dislike:active {
+    color: #fc0335; /* Цвет при клике на дизлайк */
+}
+
+/* Дополнительно: изменение цвета иконок и текста по состоянию */
+.btn-like.liked, .btn-dislike.disliked {
+    color: #007bff;
+}

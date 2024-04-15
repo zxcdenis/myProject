@@ -1,0 +1,12 @@
+{% extends 'news_app/base.html' %}
+{% block content %}
+<div class="container mt-5">
+    <h2>Редактировать комментарий</h2>
+    <form method="post">
+        {% csrf_token %}
+        {{ form.as_p }}
+        <button type="submit" class="btn btn-primary">Сохранить изменения</button>
+        <a href="{% url 'thread_detail' comment.thread.id %}" class="btn btn-secondary">Отменить</a>
+    </form>
+</div>
+{% endblock %}

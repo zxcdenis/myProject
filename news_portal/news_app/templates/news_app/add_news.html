@@ -1,0 +1,38 @@
+{% extends 'news_app/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Добавить новость</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_title">Название</label>
+            <input type="text" class="form-control" id="id_title" name="title" placeholder="Введите название новости">
+        </div>
+        <div class="form-group">
+            <label for="id_content">Содержание</label>
+            <textarea class="form-control" id="id_content" name="content" rows="3" placeholder="Введите текст новости"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="id_image">Изображение</label>
+            <input type="file" class="form-control-file" id="id_image" name="image">
+        </div>
+        <div class="form-group">
+            <label for="id_tags">Теги</label>
+            {{ form.tags }}
+        </div>
+        <button type="submit" class="btn btn-primary">Опубликовать</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#id_tags').select2({
+        placeholder: "Выберите теги",
+        allowClear: true
+    });
+});
+</script>
+{% endblock %}

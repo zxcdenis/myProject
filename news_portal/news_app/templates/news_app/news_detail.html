@@ -1,0 +1,93 @@
+{% extends 'news_app/base.html' %}
+{% load custom_tags widget_tweaks %}
+
+{% block content %}
+<div class="container py-5">
+    <article class="shadow p-4 mb-5 bg-white rounded">
+        <h2>{{ article.title }}</h2>
+        <div class="article-tags">
+            <strong>Теги:</strong>
+            {% for tag in article.tags.all %}
+                <span class="badge badge-warning">{{ tag.name }}</span>
+            {% endfor %}
+        </div>
+        {% if article.image %}
+            <img src="{{ article.image.url }}" alt="{{ article.title }}" class="img-fluid">
+        {% endif %}
+        <div class="article-content">
+            <p class="mt-3 px-3 py-2">{{ article.content|linebreaksbr }}
+        </div>
+        <p class="text-muted">Опубликован: {{ article.published_date }}</p>
+
+        {% if request.user|has_group:"Модераторы" %}
+            <div class="mb-3">
+                <a href="{% url 'edit_article' article.id %}" class="btn btn-sm btn-outline-primary">Редактировать</a>
+                <a href="{% url 'delete_article' article.id %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+            </div>
+    {% endif %}
+    </article>
+    
+    <section class="comments-section mt-5">
+        <h3>Комментарии</h3>
+        {% for comment in comments %}
+            {% include "news_app/article_respond.html" with comment=comment %}
+        {% endfor %}
+    </section>
+
+    {% if user.is_authenticated %}
+    <div class="add-comment-form mt-5">
+        <h4>Оставить комментарий</h4>
+        <form method="post" class="mt-3" id="comment-form">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ comment_form.text|add_class:"form-control" }}
+                <input type="hidden" name="parent_id" id="parent_id">
+            </div>
+            <button type="submit" class="btn btn-primary">Оставить комментарий</button>
+        </form>
+    </div>
+    {% else %}
+        <p class="mt-3"><a href="{% url 'sign_in' %}?next={{ request.path }}" class="btn btn-outline-primary">Войдите, чтобы оставить комментарий</a></p>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+
+$(document).ready(function() {
+    $('.btn-like, .btn-dislike').click(function(e) {
+        e.preventDefault();
+        var commentId = $(this).data('comment-id');
+        var action = $(this).data('action');
+        var url = `/comments/${commentId}/${action}/`;
+        
+        $.ajax({
+            url: url,
+            method: 'GET',
+            data: {},
+            success: function(data) {
+                $(`#likes-count-${commentId}`).text(data.likes);
+                $(`#dislikes-count-${commentId}`).text(data.dislikes);
+                if (data.action == 'liked') {
+                    $(`[data-comment-id="${commentId}"][data-action="like"]`).addClass('active');
+                    $(`[data-comment-id="${commentId}"][data-action="dislike"]`).removeClass('active');
+                } else if (data.action == 'disliked') {
+                    $(`[data-comment-id="${commentId}"][data-action="dislike"]`).addClass('active');
+                    $(`[data-comment-id="${commentId}"][data-action="like"]`).removeClass('active');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('AJAX Error: ', status, error);
+            }
+        });
+    });
+    
+    $('.reply-btn').click(function() {
+        const commentId = $(this).data('comment-id');
+        $('#parent_id').val(commentId);
+        $('.add-comment-form').scrollIntoView({ behavior: 'smooth' });
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,44 @@
+{% extends 'news_app/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Редактирование новости</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_title">Название</label>
+            <input type="text" class="form-control" id="id_title" name="title" value="{{ form.title.value }}" placeholder="Введите название новости">
+        </div>
+        <div class="form-group">
+            <label for="id_content">Содержание</label>
+            <textarea class="form-control" id="id_content" name="content" rows="3" placeholder="Введите текст новости">{{ form.content.value }}</textarea>
+        </div>
+        <div class="form-group">
+            <label for="id_image">Изображение</label>
+            {% if form.instance.image %}
+                <div class="form-check">
+                    <input type="checkbox" class="form-check-input" id="delete_image" name="delete_image">
+                    <label class="form-check-label" for="delete_image">Удалить изображение</label>
+                </div>
+            {% endif %}
+            <input type="file" class="form-control-file" id="id_image" name="image">
+        </div>
+        <div class="form-group">
+            <label for="id_tags">Теги</label>
+            {{ form.tags }}
+        </div>
+        <button type="submit" class="btn btn-success">Сохранить</button>
+    </form>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#id_tags').select2({
+        placeholder: "Выберите теги",
+        allowClear: true
+    });
+});
+</script>
+{% endblock %}

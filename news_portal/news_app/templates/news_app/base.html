@@ -1,0 +1,113 @@
+{% load static %}
+
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1.0">
+        <title>{% block title %}News and Threads{% endblock %}</title>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/css/select2.min.css" rel="stylesheet" />
+        <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
+        <link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+        <link rel="stylesheet" href="{% static 'news_app/css/style.css' %}">
+        {% block extra_head %}{% endblock %}
+    </head>
+<body>
+    <header class="fixed-top"> 
+        <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+            <div class="container">
+                <a class="navbar-brand" href="{% url 'home' %}">News and Threads</a>
+                    <img src="{% static 'news_app/img/3LYZ0eFd5fU.png' %}" alt="Logo" style="height: 50px;">
+                <button class="navbar-toggler" type="button" data-toggle="collapse" data-target="#navbarNav" aria-controls="navbarNav" aria-expanded="false" aria-label="Toggle navigation">
+                    <span class="navbar-toggler-icon"></span>
+                </button>
+                <div class="collapse navbar-collapse" id="navbarNav">
+                    <ul class="navbar-nav ml-auto">
+                        {% if user.is_authenticated %}
+                            <li class="nav-item">
+                                <span class="navbar-text">Привет, {{ user.username }}!</span>
+                            </li>
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'logout' %}"><i class="fas fa-sign-out-alt"></i> Выйти</a>
+                            </li>
+                        {% else %}
+                            <li class="nav-item">
+                                <a class="nav-link" href="{% url 'sign_in' %}"><i class="fas fa-sign-in-alt"></i> Войти</a>
+                            </li>
+                        {% endif %}
+                        <li class="nav-item">
+                            <form action="{% url 'search_results' %}" method="get" class="d-flex">
+                                <select class="form-control select2" name="tags" multiple>
+                                    {% for tag in all_tags %}
+                                        <option value="{{ tag.name }}">{{ tag.name }}</option>
+                                    {% endfor %}
+                                </select>
+                                <button class="btn btn-outline-success" type="submit"><i class="fas fa-search"></i></button>
+                            </form>
+
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </nav>
+    </header>
+    <main class="main-container mt-4 mb-4">
+        {% block content %}{% endblock %}
+    </main>
+    {% block extra_js %}{% endblock %}
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/select2/4.0.13/js/select2.min.js"></script>
+    <script>
+        $(document).on('submit', '#search-form', function(e) {
+            e.preventDefault();
+            var formData = $(this).serialize();
+            
+            $.ajax({
+                url: "{% url 'search_results' %}",
+                type: 'GET',
+                data: formData,
+                success: function(response) {
+                    $('#search_results').html(response.html); // Убедитесь, что у вас есть контейнер с id="search-results" в HTML
+                },
+                error: function(xhr, status, error) {
+                    console.error('Ошибка при отправке формы: ' + error);
+                }
+            });
+        });           
+    document.addEventListener('DOMContentLoaded', function() {
+        const threads = document.querySelectorAll('.clickable-thread');
+        threads.forEach(thread => {
+            thread.addEventListener('click', () => {
+                window.location.href = thread.getAttribute('data-href');
+            });
+        });
+    
+        document.querySelectorAll('.reply-btn').forEach(btn => {
+            btn.addEventListener('click', e => {
+                e.preventDefault();
+                const parent_id = btn.getAttribute('data-comment-id'); 
+                const form = document.querySelector('.add-comment-form form');
+                form.querySelector('input[name="parent_id"]').value = parent_id;
+                form.querySelector('textarea[name="text"]').focus(); 
+            });
+        });
+    });
+    document.addEventListener("DOMContentLoaded", function() {
+        const headerHeight = document.querySelector('header').offsetHeight;
+        document.querySelector('main').style.paddingTop = `${headerHeight}px`;
+    });
+    $(document).ready(function() {
+        $('.select2').select2({
+            placeholder: "теги",
+            allowClear: true,
+            theme: "classic",
+            width: 'resolve', 
+            dropdownAutoWidth: true,
+        });
+    });
+    </script>
+</body>
+</html>

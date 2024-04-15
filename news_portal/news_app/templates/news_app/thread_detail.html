@@ -1,0 +1,63 @@
+{% extends 'news_app/base.html' %}
+{% load custom_tags widget_tweaks %}
+
+{% block content %}
+<div class="container py-5">
+    <article class="shadow p-4 mb-5 bg-white rounded">
+        <h2>{{ thread.title }}</h2>
+        <div class="thread-content">
+            <p class="mt-3 px-3 py-2">{{ thread.content|linebreaksbr }}
+        </div>
+        {% comment %} <p class="mt-3">{{ thread.content }}</p> {% endcomment %}
+        {% if request.user|has_group:"Модераторы" %}
+            <div class="mb-3">
+                <a href="{% url 'delete_thread' thread.id %}" class="btn btn-sm btn-outline-danger">Удалить</a>
+            </div>
+        {% endif %}
+
+    </article>
+
+    <section class="comments-section mt-5">
+        <h3>Комментарии</h3>
+        {% for comment in comments %}
+            {% include "news_app/thread_respond.html" with comment=comment %}
+        {% endfor %}
+        <p class="text-muted">Комментариев пока нет. Оставьте первый комментарий!</p>
+    </section>
+
+
+    {% if user.is_authenticated %}
+    <div class="add-comment-form mt-5">
+        <h4>Оставить комментарий</h4>
+        <form method="post" class="mt-3">
+            {% csrf_token %}
+            <div class="form-group">
+                {{ form.text|add_class:"form-control" }}
+                <input type="hidden" name="parent_id" id="parent_id">
+            </div>
+            <button type="submit" class="btn btn-primary">Оставить комментарий</button>
+        </form>
+    </div>
+    {% else %}
+        <p class="mt-3"><a href="{% url 'sign_in' %}?next={{ request.path }}" class="btn btn-outline-primary">Войдите, чтобы оставить комментарий</a></p>
+    {% endif %}
+</div>
+{% endblock %}
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        document.querySelectorAll('.reply-btn').forEach(function(button) {
+            button.onclick = function() {
+                const commentId = this.getAttribute('data-comment-id');
+                const parentInput = document.querySelector('#parent_id');
+                if (parentInput) {
+                    parentInput.value = commentId;
+                    document.querySelector('.add-comment-form form').scrollIntoView({ behavior: 'smooth', block: 'start' });
+                }
+            };
+        });
+    });
+</script>
+
+
+    

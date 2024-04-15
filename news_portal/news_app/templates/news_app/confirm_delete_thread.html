@@ -1,0 +1,8 @@
+{% extends 'news_app/base.html' %}{% block content %}
+    <h2>Вы уверены, что хотите удалить "{{ thread.title }}"?</h2>
+    <form method="post">
+        {% csrf_token %}
+        <button type="submit" class="btn btn-danger">Удалить</button>
+        <a href="{% url 'home' %}" class="btn btn-secondary">Отмена</a>
+    </form>
+{% endblock %}
