@@ -15,7 +15,7 @@ SECRET_KEY = "django-insecure-ukw_3@w8xlx6jeh5$4fp45s(%-pl@$w)$h84t2!6$new1wi3%g
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['*']
 
 
 # Application definition
@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     'django_select2',
     'widget_tweaks',
+    'django_extensions',
     'news_app'
 ]
 

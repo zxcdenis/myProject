@@ -1,10 +1,45 @@
 {% extends 'news_app/base.html' %}
+{% load custom_tags  %}  
+
 {% block content %}
 <div class="container py-4">
-    <h2>Все новости</h2>
+    <div class="d-flex justify-content-between align-items-center mb-3">
+
+    {% if filter_type == 'latest' %}        
+        <h2 class="mb-0">Последние 50 новостей</h2>
+    {% endif %}
+    {% if filter_type == 'tags' %}        
+        <h2 class="mb-0">Последние 50 новостей по тегам</h2>
+    {% endif %}    
+</div>
+
+    <ul class="nav nav-tabs">
+        <li class="nav-item">
+            <a href="{% url 'all_news' %}?filter=latest" class="nav-link {% if filter_type == 'latest' %}active{% endif %}">
+                <i class="fas fa-newspaper"></i> Последние
+            </a>
+        </li>
+        <li class="nav-item">
+            <a href="{% url 'all_news' %}?filter=tags" class="nav-link {% if filter_type == 'tags' %}active{% endif %}">
+                <i class="fas fa-tags"></i> По тегам
+            </a>
+        </li>
+    </ul>
+    <form method="get" action="{% url 'all_news' %}">
+        <input type="hidden" name="filter" value="tags">
+        <select name="tags" multiple>
+            {% for tag in all_tags %}
+            <option value="{{ tag.id }}" {% if tag.id|stringformat:"s" in selected_tags_ids %}selected{% endif %}>
+                {{ tag.name }}
+            </option>
+            {% endfor %}
+        </select>
+        <button type="submit" class="btn btn-primary">Фильтровать</button>
+    </form>
     {% for article in page_obj %}
         <div class="card mb-3 clickable-thread shadow-sm" data-href="{% url 'news_detail' article.id %}">
             <div class="card-body">
+                
                 <h3 class="card-title">{{ article.title }}</h3>
                 {% if article.image %}
                     <img src="{{ article.image.url }}" class="card-img-top" alt="{{ article.title }}">
@@ -13,9 +48,16 @@
                 <div class="text-muted">Опубликован в: {{ article.published_date|date:"Y-m-d H:i" }}</div>
                 <div class="article-tags">
                     <strong>Теги:</strong>
+
                     {% for tag in article.tags.all %}
                         <span class="badge badge-warning">{{ tag.name }}</span>
                     {% endfor %}
+                </div>
+                <div class="text-muted">
+                    <small>
+                        {{ article.comments.count }}
+                        {{ article.comments.count|russian_pluralize:"комментарий,комментария,комментариев" }}
+                    </small>
                 </div>
             </div>
         </div>
@@ -24,16 +66,119 @@
         <span class="step-links">
             {% if page_obj.has_previous %}
                 <a href="?page=1">&laquo; первая</a>
-                <a href="?page={{ page_obj.previous_page_number }}">предыдущая</a>
-            {% endif %}
+                <a href="?page={{ page_obj.previous_page_number }}&filter={{ filter_type }}{% if filter_type == 'tags' %}{% for tag in selected_tags_ids %}&tags={{ tag }}{% endfor %}{% endif %}">предыдущая</a>
+                {% endif %}
             <span class="current">
                 Страница {{ page_obj.number }} из {{ page_obj.paginator.num_pages }}.
             </span>
             {% if page_obj.has_next %}
-                <a href="?page={{ page_obj.next_page_number }}">следующая</a>
-                <a href="?page={{ page_obj.paginator.num_pages }}">последняя &raquo;</a>
+            <a href="?page={{ page_obj.next_page_number }}&filter={{ filter_type }}{% if filter_type == 'tags' %}{% for tag in selected_tags_ids %}&tags={{ tag }}{% endfor %}{% endif %}">следующая</a>
+            <a href="?page={{ page_obj.paginator.num_pages }}">последняя &raquo;</a>
             {% endif %}
         </span>
     </div>
 </div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    $(document).ready(function() {
+        function toggleTagFilterDisplay() {
+            var filter = new URLSearchParams(window.location.search).get('filter');
+            console.log("Filter type:", filter);
+        
+            if (filter === 'tags') {
+                $('form select[name="tags"]').closest('form').show();
+                $('select[name="tags"]').select2({
+                    width: '100%',
+                    placeholder: 'Выберите теги'
+                });              
+            } else {
+                $('form select[name="tags"]').closest('form').hide();
+            }
+        }
+
+        toggleTagFilterDisplay()
+
+        $('.nav-tabs .nav-item .nav-link').on('click', function() {
+            var selectedFilter = $(this).attr('href').split('=')[1];
+            history.replaceState(null, '', '?filter=' + selectedFilter);
+            toggleTagFilterDisplay();
+            if (selectedFilter === 'latest') {
+                filterArticles('latest', []); 
+            } else {
+                filterArticles('tags', $('select[name="tags"]').val());
+            }
+        });
+
+        function filterArticles() {
+            var urlParams = new URLSearchParams(window.location.search);
+            var filter = urlParams.get('filter');
+            var tags = urlParams.getAll('tags');
+        
+            $.ajax({
+                url: "{% url 'all_news' %}",
+                data: {
+                    filter: filter,
+                    tags: tags
+                },
+                dataType: 'json',
+                success: function(data) {
+                    $('#news').empty();
+                    $.each(data.articles, function(i, article) {
+                        $('#news').append(createArticleHtml(article));
+                    });
+                    updatePaginationLinks();
+                }
+            });
+        }
+
+        function updatePaginationLinks() {
+            var filterType = $('ul.nav-tabs .active').attr('href').split('=')[1];
+            var selectedTags = $('select[name="tags"]').val() || [];
+            $('.pagination a').each(function() {
+                var pageNumber = $(this).data('page-number');
+                var newHref = '?page=' + pageNumber + '&filter=' + filterType;
+                if (filterType === 'tags' && selectedTags.length > 0) {
+                    newHref += selectedTags.map(tag => '&tags=' + tag).join('');
+                }
+                $(this).attr('href', newHref);
+            });
+        }
+    
+        function loadPage(pageNumber) {
+            $.ajax({
+                url: "{% url 'all_news' %}",
+                data: {
+                    page: pageNumber,
+                    filter: $('ul.nav-tabs .active').attr('href').split('=')[1],
+                    tags: $('select[name="tags"]').val()
+                },
+                dataType: 'json',
+                success: function(data) {
+                    $('#news').empty();
+                    $.each(data.articles, function(i, article) {
+                        $('#news').append(createArticleHtml(article));
+                    });
+                    updatePaginationLinks();
+                }
+            });
+        }
+    
+        function createArticleHtml(article) {
+            var articleHtml = '<div class="card mb-3"><div class="card-body">' +
+                              '<h3 class="card-title"><a href="' + article.detail_url + '">' + article.title + '</a></h3>' +
+                              (article.image_url ? '<img src="' + article.image_url + '" class="card-img-top">' : '') +
+                              '<p class="card-text">' + article.content + '</p>' +
+                              '</div></div>';
+            return articleHtml;
+        }
+    
+        $('select[name="tags"]').on('change', filterArticles);
+        $(document).on('click', '.pagination a', function(e) {
+            e.preventDefault();
+            var page = $(this).data('page-number');
+            loadPage(page);
+        });
+    });
+</script>
 {% endblock %}

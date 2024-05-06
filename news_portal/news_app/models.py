@@ -13,6 +13,7 @@ class Article(models.Model):
 
     def __str__(self):
         return self.title
+    
 
 class Tag(models.Model):
     name = models.CharField('Название', max_length=100, unique=True)
@@ -35,9 +36,27 @@ class Comment(models.Model):
     text = models.TextField()
     created_date = models.DateTimeField(default=timezone.now)
     parent = models.ForeignKey('self', related_name='replies', null=True, blank=True, on_delete=models.CASCADE)
+    likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_thread_comments', blank=True)
+    dislikes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='disliked_thread_comments', blank=True)
+    is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.text[:20]  
+        return self.text[:20] if not self.is_deleted else "Комментарий был удален"
+
+    def add_like(self, user):
+        self.dislikes.remove(user)  
+        self.likes.add(user) 
+
+    def add_dislike(self, user):
+        self.likes.remove(user)  
+        self.dislikes.add(user) 
+
+
+    def is_liked_by(self, user):
+        return self.likes.filter(id=user.id).exists()
+
+    def is_disliked_by(self, user):
+        return self.dislikes.filter(id=user.id).exists()
     
 class ArticleComment(models.Model):
     article = models.ForeignKey(Article, related_name='comments', on_delete=models.CASCADE)
@@ -47,9 +66,10 @@ class ArticleComment(models.Model):
     parent = models.ForeignKey('self', related_name='replies', null=True, blank=True, on_delete=models.CASCADE)
     likes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='liked_comments', blank=True)
     dislikes = models.ManyToManyField(settings.AUTH_USER_MODEL, related_name='disliked_comments', blank=True)
+    is_deleted = models.BooleanField(default=False)
 
     def __str__(self):
-        return self.text[:20]
+        return self.text[:20] if not self.is_deleted else "Комментарий был удален"
 
     def add_like(self, user):
         self.dislikes.remove(user)

@@ -9,6 +9,7 @@ from django.conf.urls.static import static
 from django.conf import settings
 from .views import search_results
 
+from .views import add_comment,add_thread_comment
 urlpatterns = [
     
     path('',views.index,name = 'home'),
@@ -30,9 +31,11 @@ urlpatterns = [
     path('news/all/', all_news_view, name='all_news'),
     path('search/', views.search_results, name='search_results'),
     path('comments/<int:comment_id>/<str:action>/', views.handle_comment_reaction, name='handle_comment_reaction'),
+    path('threads/comments/<int:comment_id>/<str:action>/', views.handle_thread_comment_reaction, name='handle_thread_comment_reaction'),
 
-    # path('comments/<int:comment_id>/like/', views.like_comment, name='like_comment'),
-    # path('comments/<int:comment_id>/dislike/', views.dislike_comment, name='dislike_comment'),
 
+
+    path('comments/add/<int:article_id>/', add_comment, name='add_comment'),
+    path('threads/<int:thread_id>/add-thread-comment/', add_thread_comment, name='add_thread_comment'),
 
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

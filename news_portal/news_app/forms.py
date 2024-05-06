@@ -15,7 +15,6 @@ class ThreadForm(forms.ModelForm):
             'title': forms.TextInput(attrs={'class': 'form-control'}),
             'content': forms.Textarea(attrs={'class': 'form-control'}),
         }
-
 class SignUpForm(UserCreationForm):
     email = forms.EmailField(max_length=254, help_text='Required. Inform a valid email address.')
 
@@ -30,9 +29,8 @@ class CommentForm(forms.ModelForm):
         model = Comment
         fields = ['text', 'parent_id']
         
-
 class NewsForm(forms.ModelForm):
-    delete_image = forms.BooleanField(required=False, label='Удалить изображение')
+    content = forms.CharField(widget=forms.Textarea(attrs={'class': 'richtext'}))  # Примените WYSIWYG редактор в шаблоне
 
     class Meta:
         model = Article
@@ -44,14 +42,11 @@ class NewsForm(forms.ModelForm):
                 'data-placeholder': 'Выберите теги...'
             }),
         }
+
     def save(self, commit=True):
         if self.cleaned_data.get('delete_image'):
             self.instance.image.delete()
-        return super().save(commit=commit)  
-
-
-        
-        
+        return super().save(commit=commit)             
 class ArticleCommentForm(forms.ModelForm):
     parent_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
 

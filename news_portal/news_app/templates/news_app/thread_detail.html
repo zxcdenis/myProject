@@ -6,30 +6,26 @@
     <article class="shadow p-4 mb-5 bg-white rounded">
         <h2>{{ thread.title }}</h2>
         <div class="thread-content">
-            <p class="mt-3 px-3 py-2">{{ thread.content|linebreaksbr }}
+            <p class="mt-3 px-3 py-2">{{ thread.content|linebreaksbr }}</p>
         </div>
-        {% comment %} <p class="mt-3">{{ thread.content }}</p> {% endcomment %}
         {% if request.user|has_group:"Модераторы" %}
             <div class="mb-3">
                 <a href="{% url 'delete_thread' thread.id %}" class="btn btn-sm btn-outline-danger">Удалить</a>
             </div>
         {% endif %}
-
     </article>
 
-    <section class="comments-section mt-5">
-        <h3>Комментарии</h3>
+    <section class="comments-section" id="comments-section">
+        <h3 class="comments-title">Комментарии</h3>
         {% for comment in comments %}
             {% include "news_app/thread_respond.html" with comment=comment %}
         {% endfor %}
-        <p class="text-muted">Комментариев пока нет. Оставьте первый комментарий!</p>
     </section>
 
-
     {% if user.is_authenticated %}
-    <div class="add-comment-form mt-5">
+    <div class="add-comment-form mt-5" id="comment-form-section">
         <h4>Оставить комментарий</h4>
-        <form method="post" class="mt-3">
+        <form method="post" class="mt-3" id="comment-form">
             {% csrf_token %}
             <div class="form-group">
                 {{ form.text|add_class:"form-control" }}
@@ -44,20 +40,117 @@
 </div>
 {% endblock %}
 
+{% block extra_js %}
 <script>
-    document.addEventListener('DOMContentLoaded', function() {
-        document.querySelectorAll('.reply-btn').forEach(function(button) {
-            button.onclick = function() {
-                const commentId = this.getAttribute('data-comment-id');
-                const parentInput = document.querySelector('#parent_id');
-                if (parentInput) {
-                    parentInput.value = commentId;
-                    document.querySelector('.add-comment-form form').scrollIntoView({ behavior: 'smooth', block: 'start' });
-                }
-            };
-        });
-    });
-</script>
-
-
     
+    $(document).ready(function() {
+        function getCSRFToken() {
+            var cookies = document.cookie.split(';');
+            for (var i = 0; i < cookies.length; i++) {
+                var cookie = cookies[i].trim();
+                var cookieParts = cookie.split('=');
+                if (cookieParts[0] === 'csrftoken') {
+                    return cookieParts[1];
+                }
+            }
+            return null;
+        }
+    
+        var csrftoken = getCSRFToken();
+
+        $(document).on('click', '.btn-like-thread, .btn-dislike-thread', function(e) {
+            e.preventDefault();
+            var commentId = $(this).data('comment-id');
+            var action = $(this).data('action');
+            var url = `/threads/comments/${commentId}/${action}/`;
+
+            $.ajax({
+                url: url,
+                method: 'GET',
+                success: function(data) {
+                    $(`#thread-likes-count-${commentId}`).text(data.likes);
+                    $(`#thread-dislikes-count-${commentId}`).text(data.dislikes);
+                    if (data.action === 'liked') {
+                        $(`[data-comment-id="${commentId}"][data-action="like"]`).addClass('active');
+                        $(`[data-comment-id="${commentId}"][data-action="dislike"]`).removeClass('active');
+                    } else if (data.action === 'disliked') {
+                        $(`[data-comment-id="${commentId}"][data-action="dislike"]`).addClass('active');
+                        $(`[data-comment-id="${commentId}"][data-action="like"]`).removeClass('active');
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error: ', status, error);
+                }
+            });
+        });
+        $(document).on('click', '.reply-btn', function() {
+            const commentId = $(this).data('comment-id');
+            $('#parent_id').val(commentId);
+            document.getElementById('comment-form-section').scrollIntoView({ behavior: 'smooth' });
+        });
+        $('#comment-form').submit(function(e) {
+            e.preventDefault();
+            var formData = $(this).serialize();
+            
+            $.ajax({
+                url: "{% url 'add_thread_comment' thread.id %}",
+                type: 'POST',
+                data: formData,
+                beforeSend: function(xhr) {
+                    xhr.setRequestHeader("X-CSRFToken", csrftoken);
+                },
+                success: function(response) {
+                    console.log("Comment added", response);
+                    if (response.parent_id) {
+                        $('#replies-' + response.parent_id).append(response.comment_html);
+                    } else {
+                        $('#comments-section').append(response.comment_html);
+                    }
+                    $('#comment-form')[0].reset();
+                    $('#parent_id').val('');
+                },
+                error: function(xhr, status, error) {
+                    console.error('Error adding comment:', error);
+                }
+            });
+        });
+
+        $('#comments-section').on('click', '.btn.btn-sm.btn-outline-danger', function() {
+            var commentId = $(this).data('id');
+         
+            $.ajax({
+                url: '/delete_thread_comment/' + commentId + '/',
+                type: 'POST',
+                data: {
+                    'csrfmiddlewaretoken': csrftoken,
+                },
+                success: function(response) {
+                    if (response.status === 'success') {
+                        var commentDiv = $('#discussion-comment-' + response.comment_id);
+                        var textElement = commentDiv.find('> .body-card > .main-comment > .card-text');
+                        if (textElement.length > 0) {
+                            textElement.text('Комментарий удален');
+                        } else {
+                            // Если .card-text не найден в основном комментарии, добавляем новый элемент
+                            commentDiv.find('> .body-card > .main-comment').prepend('<p class="card-text">Комментарий удален</p>');
+                        }
+        
+                        // Скрываем кнопки только в текущем комментарии
+                        commentDiv.find('> .body-card > .main-comment > .card-subtitle').hide();
+                        commentDiv.find('> .body-card > .comment-menu').children('.btn, a').hide();
+                        commentDiv.find('> .body-card > .comment-interactions').children('.btn').hide();
+                    } else {
+                        alert(response.message);
+                    }
+                },
+                error: function() {
+                    alert('Ошибка при удалении комментария.');
+                }
+            });
+        });
+   
+    });
+
+
+</script>
+{% endblock %}

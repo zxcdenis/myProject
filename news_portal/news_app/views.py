@@ -5,6 +5,7 @@ from django.contrib.auth import logout
 from django.contrib.auth.views import LoginView
 from django.contrib.auth.decorators import login_required, user_passes_test
 from django.http import HttpResponseForbidden
+from django.template.loader import render_to_string
 
 from .models import Article, Thread, Comment,ArticleComment,Tag
 
@@ -14,48 +15,88 @@ from django.db.models import Q
 from django.core.paginator import Paginator
 from django.http import JsonResponse
 
+
 def search_results(request):
-    query = request.GET.get('q')
-    tags = request.GET.getlist('tags')
-    
-    articles = Article.objects.all()
-    if query:
-        articles = articles.filter(
-            Q(title__icontains=query) |
-            Q(content__icontains=query)
-        )
-    if tags:
-        articles = articles.filter(tags__name__in=tags).distinct()
-    
+    query = request.GET.get('q', '')
+    articles = Article.objects.filter(
+        Q(title__icontains=query) | Q(content__icontains=query)
+    )
+
     return render(request, 'news_app/search_results.html', {'articles': articles})
 
+from django.urls import reverse
+
+import logging
+logger = logging.getLogger(__name__)
 
 def all_news_view(request):
-    all_articles = Article.objects.all().order_by('-published_date')
-    paginator = Paginator(all_articles, 10)  
-    page_number = request.GET.get('page')
-    page_obj = paginator.get_page(page_number)
-    return render(request, 'news_app/all_news.html', {'page_obj': page_obj})
+    try:
+        filter_type = request.GET.get('filter', 'latest')
+        selected_tags_ids = request.GET.getlist('tags')
+
+        if filter_type == 'tags' and selected_tags_ids:
+            articles = Article.objects.filter(tags__id__in=selected_tags_ids).distinct()
+        else:
+            articles = Article.objects.all().order_by('-published_date')
+
+        paginator = Paginator(articles, 50)
+        page_number = request.GET.get('page')
+        page_obj = paginator.get_page(page_number)
+
+        if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+            articles_data = [{
+                'title': article.title,
+                'content': article.content,
+                'published_date': article.published_date.strftime('%Y-%m-%d %H:%M'),
+                'image_url': article.image.url if article.image else None,
+                'tags': [tag.name for tag in article.tags.all()],
+                'comments_count': article.comments.count(),
+                'detail_url': reverse('news_detail', args=[article.id])
+            } for article in page_obj.object_list]
+
+            return JsonResponse({'articles': articles_data})
+
+        return render(request, 'news_app/all_news.html', {
+            'page_obj': page_obj,
+            'filter_type': filter_type,
+            'all_tags': Tag.objects.all(),
+        })
+    except Exception as e:
+        logger.error("Failed to load news articles: %s", e)
+        raise
+
 
 def index(request):
     filter_type = request.GET.get('filter', 'latest')
-    all_tags = Tag.objects.all()
-    articles = Article.objects.all().order_by('-published_date')
     selected_tags_ids = request.GET.getlist('tags')
-    if selected_tags_ids:
-        articles = articles.filter(tags__id__in=selected_tags_ids).distinct()
-    tags_ids = request.GET.getlist('tag')
-    if tags_ids:
-        articles = articles.filter(tags__id__in=tags_ids).distinct()
+
+    if filter_type == 'tags' and selected_tags_ids:
+            articles = Article.objects.filter(tags__id__in=selected_tags_ids).distinct()
+    else:
+            articles = Article.objects.all().order_by('-published_date')[:10]
+            
 
     threads = Thread.objects.all().order_by('-published_date')[:20]
+
+    if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        articles_data = [{
+            'title': article.title,
+            'content': article.content,
+            'published_date': article.published_date.strftime('%Y-%m-%d %H:%M'),
+            'image_url': article.image.url if article.image else None,
+            'tags': [tag.name for tag in article.tags.all()],
+            'comments_count': article.comments.count(),
+            'detail_url': reverse('news_detail', args=[article.id])
+        } for article in articles]
+
+        return JsonResponse({'articles': articles_data})
 
     return render(request, 'news_app/index2.html', {
         'title': 'Главная страница',
         'articles': articles,
         'threads': threads,
-        'all_tags': all_tags,
-        'selected_tags_ids': selected_tags_ids,
+        'all_tags': Tag.objects.all(),
+        'filter_type': filter_type
     })
                   
 
@@ -120,23 +161,39 @@ def is_moderator(user):
 
 
 
+# @login_required
+# def delete_article_comment(request, comment_id):
+#     comment = get_object_or_404(ArticleComment, pk=comment_id)
+#     if request.user == comment.author or request.user.groups.filter(name='Модераторы').exists() or request.user.is_superuser:
+#         comment.delete()
+#         return redirect(request.META.get('HTTP_REFERER', 'home'))
+#     else:
+#         return HttpResponseForbidden()
+
+from django.views.decorators.http import require_POST
+@require_POST  
 @login_required
 def delete_article_comment(request, comment_id):
     comment = get_object_or_404(ArticleComment, pk=comment_id)
     if request.user == comment.author or request.user.groups.filter(name='Модераторы').exists() or request.user.is_superuser:
-        comment.delete()
-        return redirect(request.META.get('HTTP_REFERER', 'home'))
+        comment.is_deleted = True
+        comment.text = ""  
+        comment.save()
+        return JsonResponse({'status': 'success', 'message': 'Комментарий удален', 'comment_id': comment_id})
     else:
-        return HttpResponseForbidden()
+        return JsonResponse({'status': 'error', 'message': 'Недостаточно прав'}, status=403)
     
 @login_required
 def delete_thread_comment(request, comment_id):
     comment = get_object_or_404(Comment, pk=comment_id)
     if request.user == comment.author or request.user.groups.filter(name='Модераторы').exists() or request.user.is_superuser:
-        comment.delete()
-        return redirect(request.META.get('HTTP_REFERER', 'home'))
+        comment.is_deleted = True
+        comment.text = ""  # Опционально, если вы хотите очистить текст комментария
+        comment.save()
+        return JsonResponse({'status': 'success', 'message': 'Комментарий удален', 'comment_id': comment_id})
     else:
-        return HttpResponseForbidden()
+        return JsonResponse({'status': 'error', 'message': 'Недостаточно прав'}, status=403)
+
 
 @login_required
 @user_passes_test(is_moderator)
@@ -172,7 +229,6 @@ def thread_detail(request, thread_id):
 
     return render(request, 'news_app/thread_detail.html', {'thread': thread, 'comments': comments, 'form': form})
 
-
 def news_detail(request, article_id):
     article = get_object_or_404(Article, pk=article_id)
     comments = article.comments.filter(parent__isnull=True)
@@ -192,35 +248,54 @@ def news_detail(request, article_id):
         comment_form = ArticleCommentForm()
     
     return render(request, 'news_app/news_detail.html', {'article': article, 'comments': comments, 'comment_form': comment_form})
-from django.template.loader import render_to_string
 
+def add_thread_comment(request, thread_id):
+    thread = get_object_or_404(Thread, pk=thread_id)
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        comment_form = CommentForm(request.POST)
+        if comment_form.is_valid():
+            comment = comment_form.save(commit=False)
+            comment.thread = thread
+            comment.author = request.user
+            parent_id = request.POST.get('parent_id')
+            if parent_id:
+                comment.parent = Comment.objects.get(id=int(parent_id))
+            else:
+                comment.parent = None
+            comment.save()
+            comment_html = render_to_string('news_app/thread_respond.html', {'comment': comment}, request)
+            return JsonResponse({
+                'comment_html': comment_html,
+                'parent_id': comment.parent.id if comment.parent else None
+            })
+    else:
+        comment_form = CommentForm()
+    return render(request, 'news_app/thread_detail.html', {'thread': thread, 'comment_form': comment_form})
 
-# def news_detail(request, article_id):
-#     article = get_object_or_404(Article, pk=article_id)
-#     comments = article.comments.filter(parent__isnull=True)
-#     comment_form = ArticleCommentForm(request.POST or None)
+def add_comment(request, article_id):
+    article = get_object_or_404(Article, pk=article_id)
+    if request.method == 'POST' and request.headers.get('X-Requested-With') == 'XMLHttpRequest':
+        comment_form = ArticleCommentForm(request.POST)
+        if comment_form.is_valid():
+            comment = comment_form.save(commit=False)
+            comment.article = article
+            comment.author = request.user
+            parent_id = request.POST.get('parent_id')
+            if parent_id:
+                comment.parent = ArticleComment.objects.get(id=int(parent_id))
+            else:
+                comment.parent = None  # Явно установить parent в None, если это корневой комментарий
+            comment.save()
+            comment_html = render_to_string('news_app/article_respond.html', {'comment': comment}, request)
+            return JsonResponse({
+                'comment_html': comment_html,
+                'parent_id': comment.parent.id if comment.parent else None  # Правильно устанавливать None для корневых комментариев
+            })
+    else:
+        comment_form = ArticleCommentForm()
+    return render(request, 'news_app/news_detail.html', {'article': article, 'comment_form': comment_form})
 
-#     if request.method == "POST" and comment_form.is_valid():
-#         new_comment = comment_form.save(commit=False)
-#         new_comment.article = article
-#         new_comment.author = request.user
-#         parent_id = request.POST.get('parent_id')
-#         if parent_id:
-#             new_comment.parent_id = int(parent_id)
-#         new_comment.save()
-
-#         if request.headers.get('x-requested-with') == 'XMLHttpRequest':
-#             html = render_to_string('news_app/article_respond.html', {'comment': new_comment}, request=request)
-#             return JsonResponse({'new_comment_html': html})
-
-#         return redirect('news_detail', article_id=article.id)
-
-#     return render(request, 'news_app/news_detail.html', {
-#         'article': article,
-#         'comments': comments,
-#         'comment_form': comment_form
-#     })  
-               
+            
 @login_required
 def edit_thread(request, thread_id):
     thread = get_object_or_404(Thread, pk=thread_id)
@@ -269,7 +344,31 @@ def handle_comment_reaction(request, comment_id, action):
         })
     return JsonResponse({'error': 'Invalid request'}, status=400)
 
+@login_required(login_url='/sign-in/', redirect_field_name='next')
+def handle_thread_comment_reaction(request, comment_id, action):
+    if request.headers.get('x-requested-with') == 'XMLHttpRequest':
+        comment = get_object_or_404(Comment, id=comment_id)
+        liked = comment.likes.filter(id=request.user.id).exists()
+        disliked = comment.dislikes.filter(id=request.user.id).exists()
 
+        if action == 'like':
+            if liked:
+                comment.likes.remove(request.user)
+            else:
+                comment.add_like(request.user)
+        elif action == 'dislike':
+            if disliked:
+                comment.dislikes.remove(request.user)
+            else:
+                comment.add_dislike(request.user)
+
+        return JsonResponse({
+            'likes': comment.likes.count(),
+            'dislikes': comment.dislikes.count(),
+            'liked': liked,  
+            'disliked': disliked
+        })
+    return JsonResponse({'error': 'Invalid request'}, status=400)
 @login_required
 def edit_article_comment(request, comment_id):
     comment = get_object_or_404(ArticleComment, pk=comment_id)
@@ -281,7 +380,7 @@ def edit_article_comment(request, comment_id):
         form = ArticleCommentForm(request.POST, instance=comment)
         if form.is_valid():
             form.save()
-            return redirect('home')  
+            return redirect('news_detail', article_id=comment.article.id)
     else:
         form = ArticleCommentForm(instance=comment)
     
