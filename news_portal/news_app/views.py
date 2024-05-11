@@ -66,22 +66,32 @@ def all_news_view(request):
         raise
 
 
+
+from django.db.models import Count, Q
+from django.shortcuts import render
+from django.http import JsonResponse
+from django.urls import reverse
+from .models import Article, Thread, Tag
+
 def index(request):
     filter_type = request.GET.get('filter', 'latest')
-    selected_tags_ids = request.GET.getlist('tags')
+    selected_tags_ids = request.GET.getlist('tags[]')
+
+
 
     if filter_type == 'tags' and selected_tags_ids:
-            articles = Article.objects.filter(tags__id__in=selected_tags_ids).distinct()
+        articles = Article.objects.filter(tags__id__in=selected_tags_ids).annotate(
+            match_count=Count('tags', filter=Q(tags__id__in=selected_tags_ids))
+        ).order_by('-match_count', '-published_date')
     else:
-            articles = Article.objects.all().order_by('-published_date')[:10]
-            
+        articles = Article.objects.all().order_by('-published_date')[:50]
 
-    threads = Thread.objects.all().order_by('-published_date')[:20]
+    threads = Thread.objects.all().order_by('-published_date')[:200]
 
     if request.headers.get('X-Requested-With') == 'XMLHttpRequest':
         articles_data = [{
             'title': article.title,
-            'content': article.content,
+            'content': article.content[:200],
             'published_date': article.published_date.strftime('%Y-%m-%d %H:%M'),
             'image_url': article.image.url if article.image else None,
             'tags': [tag.name for tag in article.tags.all()],
@@ -96,9 +106,10 @@ def index(request):
         'articles': articles,
         'threads': threads,
         'all_tags': Tag.objects.all(),
-        'filter_type': filter_type
+        'filter_type': filter_type,
+        'selected_tags_ids': selected_tags_ids
     })
-                  
+
 
 def threads_list(request):
     threads = Thread.objects.all().order_by('-published_date')
@@ -157,18 +168,6 @@ def sign_in(request):
 
 def is_moderator(user):
     return user.groups.filter(name='Модераторы').exists() or user.is_superuser
-
-
-
-
-# @login_required
-# def delete_article_comment(request, comment_id):
-#     comment = get_object_or_404(ArticleComment, pk=comment_id)
-#     if request.user == comment.author or request.user.groups.filter(name='Модераторы').exists() or request.user.is_superuser:
-#         comment.delete()
-#         return redirect(request.META.get('HTTP_REFERER', 'home'))
-#     else:
-#         return HttpResponseForbidden()
 
 from django.views.decorators.http import require_POST
 @require_POST  

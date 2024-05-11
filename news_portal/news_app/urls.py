@@ -32,9 +32,6 @@ urlpatterns = [
     path('search/', views.search_results, name='search_results'),
     path('comments/<int:comment_id>/<str:action>/', views.handle_comment_reaction, name='handle_comment_reaction'),
     path('threads/comments/<int:comment_id>/<str:action>/', views.handle_thread_comment_reaction, name='handle_thread_comment_reaction'),
-
-
-
     path('comments/add/<int:article_id>/', add_comment, name='add_comment'),
     path('threads/<int:thread_id>/add-thread-comment/', add_thread_comment, name='add_thread_comment'),
 

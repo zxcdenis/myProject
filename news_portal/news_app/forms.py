@@ -3,6 +3,7 @@ from .models import Thread, Comment, Article, ArticleComment,Tag
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django_select2.forms import Select2MultipleWidget
+from news_app.models import Tag
 
 
 
@@ -53,3 +54,4 @@ class ArticleCommentForm(forms.ModelForm):
     class Meta:
         model = ArticleComment
         fields = ['text', 'parent_id']
+        
