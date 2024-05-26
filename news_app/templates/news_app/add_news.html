@@ -1,0 +1,73 @@
+{% extends 'news_app/base.html' %}
+
+{% block content %}
+<div class="container mt-5">
+    <h2 class="mb-4">Добавить новость</h2>
+    <form method="post" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="id_title">Название</label>
+            <input type="text" class="form-control" id="id_title" name="title" placeholder="Введите название новости" value="{{ form.title.value|default_if_none:'' }}">
+            {% if form.title.errors %}
+                <div class="text-danger">
+                    {% for error in form.title.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="id_content">Содержание</label>
+            <textarea class="form-control" id="id_content" name="content" rows="3" placeholder="Введите текст новости">{{ form.content.value|default_if_none:'' }}</textarea>
+            {% if form.content.errors %}
+                <div class="text-danger">
+                    {% for error in form.content.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="id_image">Изображение</label>
+            <input type="file" class="form-control-file" id="id_image" name="image">
+            {% if form.image.errors %}
+                <div class="text-danger">
+                    {% for error in form.image.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <div class="form-group">
+            <label for="id_tags">Теги</label>
+            {{ form.tags }}
+            {% if form.tags.errors %}
+                <div class="text-danger">
+                    {% for error in form.tags.errors %}
+                        <p>{{ error }}</p>
+                    {% endfor %}
+                </div>
+            {% endif %}
+        </div>
+        <button type="submit" class="btn btn-primary">Опубликовать</button>
+    </form>
+    {% if form.non_field_errors %}
+        <div class="text-danger mt-3">
+            {% for error in form.non_field_errors %}
+                <p>{{ error }}</p>
+            {% endfor %}
+        </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+$(document).ready(function() {
+    $('#id_tags').select2({
+        placeholder: "Выберите теги",
+        allowClear: true
+    });
+});
+</script>
+{% endblock %}

@@ -1,0 +1,186 @@
+{% extends 'news_app/base.html' %}
+{% load custom_tags %}
+{% block content %}
+<div class="container py-4">
+    <div class="row g-4">
+        <section id="news" class="col-lg-8">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+                <h2 id="filter-title" class="mb-0">Последние новости</h2>
+                 {% if request.user|has_group:"Модераторы" %}
+                    <a href="{% url 'add_news' %}" class="btn btn-outline-success">Добавить новость</a>
+                {% endif %} 
+            </div>
+            
+            <ul class="nav nav-tabs">
+                <li class="nav-item">
+                    <a href="?filter=latest" class="nav-link" data-filter="latest">
+                        <i class="fas fa-newspaper"></i> Последние
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a href="?filter=tags" class="nav-link" data-filter="tags">
+                        <i class="fas fa-tags"></i> По тегам
+                    </a>
+                </li>
+            </ul>
+            
+            <form id="tag-filter-form" method="get" action="{% url 'home' %}" style="display:none;">
+                <input type="hidden" name="filter" value="tags">
+                <select name="tags" multiple>
+                    {% for tag in all_tags %}
+                    <option value="{{ tag.id }}">{{ tag.name }}</option>
+                    {% endfor %}
+                </select>
+                <button type="submit" class="btn btn-primary">Фильтровать</button>
+            </form>
+            
+            <div id="article-container"></div>            
+            <noscript>
+                {% for article in articles %}
+                <div class="card mb-3 clickable-thread shadow-sm" data-href="{% url 'news_detail' article.id %}">
+                    <div class="card-body">
+                        <h3 class="card-title">
+                            <a href="{% url 'news_detail' article.id %}" class="text-decoration-none text-dark">{{ article.title }}</a>
+                        </h3>
+                        {% if article.image %}
+                            <img src="{{ article.image.url }}" class="card-img-top" alt="{{ article.title }}">
+                        {% endif %}
+                        <p class="card-text">{{ article.content|truncatewords:30 }}</p>
+                        <div class="text-muted">Дата Публикации: {{ article.published_date|date:"Y-m-d H:i" }}</div>
+                        <div class="article-tags">
+                            <strong>Теги:</strong>
+                            {% for tag in article.tags.all %}
+                                <span class="badge badge-warning">{{ tag.name }}</span>
+                            {% endfor %}
+                        </div>
+                        <div class="text-muted">
+                            <small>
+                                {{ article.comments.count }}
+                                {{ article.comments.count|russian_pluralize:"комментарий,комментария,комментариев" }}
+                            </small>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+                <div class="mt-4">
+                    <a href="{% url 'all_news' %}" class="btn btn-outline-info">Больше новостей</a>
+                </div>
+            </noscript>
+            
+        </section>
+
+        <aside id="threads" class="col-lg-4 extra-padding-left">
+            <h2 class="mb-3">Недавняя активность</h2>
+            <a href="/add_thread/" class="btn btn-outline-primary mb-3">Добавить новое обсуждение</a>
+            {% for thread in threads %}
+            <div class="card mb-3 clickable-thread shadow-sm" data-href="{% url 'thread_detail' thread.id %}">
+                <div class="card-body">
+                    <h3 class="card-title">{{ thread.title }}</h3>
+                    <div class="text-muted">
+                        <small>Автор: {{ thread.author.username }}</small><br>
+                        <small>Дата Публикации: {{ thread.published_date|date:"Y-m-d H:i" }}</small>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </aside>
+    </div>
+</div>
+{% endblock %}
+{% block extra_js %}
+<script>
+    function createArticleHtml(article) {
+        var html = '<div class="card mb-3 clickable-thread shadow-sm" data-href="' + article.detail_url + '">';
+        html += '<div class="card-body">';
+        html += '<h3 class="card-title"><a href="' + article.detail_url + '" class="text-decoration-none text-dark">' + article.title + '</a></h3>';
+        if (article.image_url) {
+            html += '<img src="' + article.image_url + '" class="card-img-top" alt="' + article.title + '">';
+        }
+        html += '<p class="card-text">' + article.content + '</p>';
+        html += '<div class="text-muted">Дата Публикации: ' + article.published_date + '</div>';
+        html += '<div class="article-tags"><strong>Теги:</strong>';
+        article.tags.forEach(function(tag) {
+            html += '<span class="badge badge-warning">' + tag + '</span>';
+        });
+        html += '</div>';
+        html += '<div class="text-muted"><small>' + article.comments_count + ' комментариев</small></div>';
+        html += '</div></div>';
+        return html;
+    }
+
+    function toggleTagFilterDisplay() {
+        var filter = new URLSearchParams(window.location.search).get('filter');
+        if (filter === 'tags') {
+            $('#tag-filter-form').show();
+            $('select[name="tags"]').select2({
+                width: '100%',
+                placeholder: 'Выберите теги'
+            });
+            $('#filter-title').text('Новости по Тегам');
+        } else {
+            $('#tag-filter-form').hide();
+            $('#filter-title').text('Последние новости');
+        }
+    }
+
+    function filterArticles() {
+        var urlParams = new URLSearchParams(window.location.search);
+        var filter = urlParams.get('filter');
+        var tags = urlParams.getAll('tags');
+
+        $.ajax({
+            url: "{% url 'home' %}",
+            data: {
+                filter: filter,
+                tags: tags
+            },
+            dataType: 'json',
+            success: function(data) {
+                $('#article-container').empty();
+                $.each(data.articles, function(i, article) {
+                    $('#article-container').append(createArticleHtml(article));
+                });
+                attachCardClickHandlers();
+            },
+            error: function(xhr, status, error) {
+                console.error("Error fetching articles:", status, error);
+            }
+        });
+    }
+
+    function attachCardClickHandlers() {
+        $('.clickable-thread').off('click').on('click', function() {
+            var href = $(this).data('href');
+            if (href) {
+                window.location.href = href;
+            }
+        });
+    }
+
+    $(document).ready(function() {
+        toggleTagFilterDisplay();
+        filterArticles();
+
+        $('.nav-tabs .nav-item .nav-link').on('click', function(e) {
+            e.preventDefault();
+            var selectedFilter = $(this).data('filter');
+            history.pushState(null, '', '?filter=' + selectedFilter);
+            toggleTagFilterDisplay();
+            filterArticles();
+        });
+
+        $('#tag-filter-form').on('submit', function(e) {
+            e.preventDefault();
+            var selectedTags = $('select[name="tags"]').val();
+            var newUrl = new URL(window.location.href);
+            newUrl.searchParams.set('filter', 'tags');
+            newUrl.searchParams.delete('tags');
+            selectedTags.forEach(function(tag) {
+                newUrl.searchParams.append('tags', tag);
+            });
+            history.pushState(null, '', newUrl);
+            filterArticles();
+        });
+    });
+</script>
+{% endblock %}
