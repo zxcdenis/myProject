@@ -15,12 +15,11 @@ RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
 # Выполняем миграции и собираем статические файлы
-
-# RUN python manage.py migrate
-# RUN python manage.py collectstatic --noinput
+RUN python manage.py migrate
+RUN python manage.py collectstatic --noinput
 
 # Открываем порт для приложения
 EXPOSE 8000
 
 # Запускаем сервер Django
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+CMD ["gunicorn", "--bind", "0.0.0.0:8000", "news_portal.wsgi:application"]
