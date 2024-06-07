@@ -13,7 +13,14 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ukw_3@w8xlx6jeh5$4fp45s(%-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'myproject-production-15b3.up.railway.app').split(',')
+ALLOWED_HOSTS = ['myproject-production-15b3.up.railway.app','localhost', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = [
+"myproject-production-15b3.up.railway.app"
+]
+SECURE_CROSS_ORIGIN_OPENER_POLICY = [
+"myproject-production-15b3.up.railway.app"
+]
+
 
 # Application definition
 
@@ -104,6 +111,7 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/4.2/howto/static-files/
 
 STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/4.2/ref/settings/#default-auto-field

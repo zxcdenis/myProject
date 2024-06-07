@@ -9,7 +9,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    container_name: myproject-db-1  # Имя контейнера
+    container_name: myproject-db-1  
 
   web:
     build: .
@@ -27,7 +27,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_HOST: myproject-db-1  # Имя контейнера
+      DB_HOST: myproject-db-1  
       DB_PORT: ${DB_PORT}
 
 volumes:
