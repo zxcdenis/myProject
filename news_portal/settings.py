@@ -1,5 +1,4 @@
 import os
-
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -14,7 +13,7 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ukw_3@w8xlx6jeh5$4fp45s(%-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '*').split(',')
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', 'myproject-production-15b3.up.railway.app').split(',')
 
 # Application definition
 
@@ -70,7 +69,7 @@ DATABASES = {
         'NAME': os.getenv('POSTGRES_DB', 'django'),
         'USER': os.getenv('POSTGRES_USER', 'django_admin'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'goodlife29ABC'),
-        'HOST': os.getenv('DB_HOST', 'db'),  # Убедитесь, что HOST указывает на имя контейнера
+        'HOST': os.getenv('DB_HOST', 'myproject-db-1'),
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }

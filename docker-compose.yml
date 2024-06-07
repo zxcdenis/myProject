@@ -9,10 +9,14 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    container_name: myproject-db-1  # Имя контейнера
 
   web:
     build: .
-    command: gunicorn news_portal.wsgi:application --bind 0.0.0.0:8000
+    command: >
+      sh -c "python manage.py migrate &&
+             python manage.py collectstatic --noinput &&
+             gunicorn news_portal.wsgi:application --bind 0.0.0.0:8000"
     volumes:
       - .:/app
     ports:
@@ -23,7 +27,7 @@ services:
       POSTGRES_DB: ${POSTGRES_DB}
       POSTGRES_USER: ${POSTGRES_USER}
       POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_HOST: ${DB_HOST}
+      DB_HOST: myproject-db-1  # Имя контейнера
       DB_PORT: ${DB_PORT}
 
 volumes:
