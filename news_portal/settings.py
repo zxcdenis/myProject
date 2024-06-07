@@ -14,12 +14,9 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ukw_3@w8xlx6jeh5$4fp45s(%-
 DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
 ALLOWED_HOSTS = ['myproject-production-15b3.up.railway.app','localhost', '127.0.0.1']
-CSRF_TRUSTED_ORIGINS = [
-"myproject-production-15b3.up.railway.app"
-]
-SECURE_CROSS_ORIGIN_OPENER_POLICY = [
-"myproject-production-15b3.up.railway.app"
-]
+CSRF_TRUSTED_ORIGINS = ["https://myproject-production-15b3.up.railway.app"]
+SECURE_CROSS_ORIGIN_OPENER_POLICY = ["https://myproject-production-15b3.up.railway.app"]
+
 
 
 # Application definition
