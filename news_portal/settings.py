@@ -70,7 +70,7 @@ DATABASES = {
         'NAME': os.getenv('POSTGRES_DB', 'django'),
         'USER': os.getenv('POSTGRES_USER', 'django_admin'),
         'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'goodlife29ABC'),
-        'HOST': os.getenv('DB_HOST', 'db'),  # Убедитесь, что HOST указывает на имя контейнера
+        'HOST': os.getenv('DB_HOST', 'myproject-db-1'),  # Измените на имя контейнера
         'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
