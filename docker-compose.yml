@@ -12,7 +12,7 @@ services:
 
   web:
     build: .
-    command: sh -c "python manage.py migrate && python manage.py collectstatic --noinput && gunicorn --bind 0.0.0.0:8000 news_portal.wsgi:application"
+    command: gunicorn news_portal.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
     ports:
