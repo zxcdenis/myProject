@@ -14,12 +14,9 @@ COPY . /app
 RUN pip install --upgrade pip
 RUN pip install -r requirements.txt
 
-# Выполняем миграции и собираем статические файлы
-RUN python manage.py migrate
-RUN python manage.py collectstatic --noinput
-
 # Открываем порт для приложения
 EXPOSE 8000
 
 # Запускаем сервер Django
 CMD ["gunicorn", "news_portal.wsgi:application", "--bind", "0.0.0.0:8000"]
+
