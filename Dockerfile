@@ -19,3 +19,4 @@ EXPOSE 8000
 
 # Запускаем сервер Django
 CMD ["gunicorn", "news_portal.wsgi:application", "--bind", "0.0.0.0:8000"]
+
