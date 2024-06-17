@@ -1,5 +1,6 @@
 import os
 from pathlib import Path
+import dj_database_url
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -11,17 +12,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ukw_3@w8xlx6jeh5$4fp45s(%-pl@$w)$h84t2!6$new1wi3%g')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.getenv('DEBUG', 'False') == 'True'
+DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['myproject-production-15b3.up.railway.app','localhost', '127.0.0.1']
-CSRF_TRUSTED_ORIGINS = ["https://myproject-production-15b3.up.railway.app"]
-SECURE_CROSS_ORIGIN_OPENER_POLICY = ["https://myproject-production-15b3.up.railway.app"]
+ALLOWED_HOSTS = ['newsandthreads-production.up.railway.app','localhost', '127.0.0.1']
+CSRF_TRUSTED_ORIGINS = ["https://newsandthreads-production.up.railway.app"]
+CORS_ALLOWED_ORIGINS = ["https://newsandthreads-production.up.railway.app"]
+SECURE_CROSS_ORIGIN_OPENER_POLICY = ["https://newsandthreads-production.up.railway.app"]
 
 
 
 # Application definition
 
 INSTALLED_APPS = [
+    'jazzmin',
     "django.contrib.admin",
     "django.contrib.auth",
     "django.contrib.contenttypes",
@@ -32,6 +35,8 @@ INSTALLED_APPS = [
     'widget_tweaks',
     'django_extensions',
     'news_app',
+
+
 ]
 
 MIDDLEWARE = [
@@ -42,7 +47,12 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
+    "whitenoise.middleware.WhiteNoiseMiddleware",
+
 ]
+
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
+
 
 ROOT_URLCONF = "news_portal.urls"
 
@@ -54,7 +64,7 @@ TEMPLATES = [
         "OPTIONS": {
             "context_processors": [
                 "django.template.context_processors.debug",
-                "django.template.context_processors.request",
+                'django.template.context_processors.request',
                 "django.contrib.auth.context_processors.auth",
                 "django.contrib.messages.context_processors.messages",
             ],
@@ -78,6 +88,11 @@ DATABASES = {
     }
 }
 
+# DATABASES = {
+#     'default': dj_database_url.config(default='postgresql://postgres:ULwnFTCOICiDxMliVFJviEOnxpojNLeX@roundhouse.proxy.rlwy.net:33080/railway')
+    
+# }
+
 AUTH_PASSWORD_VALIDATORS = [
     {
         "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
@@ -95,6 +110,13 @@ AUTH_PASSWORD_VALIDATORS = [
 
 # Internationalization
 # https://docs.djangoproject.com/en/4.2/topics/i18n/
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'mexzo0d@gmail.com'  # Ваш email адрес Gmail
+EMAIL_HOST_PASSWORD = 'gpeogomvnkfwizkq'
+DEFAULT_FROM_EMAIL = 'mexzo0d@gmail.com'
 
 LANGUAGE_CODE = "ru"
 
@@ -122,3 +144,4 @@ LOGOUT_REDIRECT_URL = 'home'
 
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+

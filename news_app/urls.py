@@ -8,6 +8,7 @@ from .views import edit_article, delete_article,delete_thread,all_news_view
 from django.conf.urls.static import static
 from django.conf import settings
 from .views import search_results
+from django.contrib.auth import views as auth_views
 
 from .views import add_comment,add_thread_comment
 urlpatterns = [
@@ -34,5 +35,8 @@ urlpatterns = [
     path('threads/comments/<int:comment_id>/<str:action>/', views.handle_thread_comment_reaction, name='handle_thread_comment_reaction'),
     path('comments/add/<int:article_id>/', add_comment, name='add_comment'),
     path('threads/<int:thread_id>/add-thread-comment/', add_thread_comment, name='add_thread_comment'),
-
+    path('password_reset/', auth_views.PasswordResetView.as_view(template_name='news_app/password_reset.html'), name='password_reset'),
+    path('password_reset/done/', auth_views.PasswordResetDoneView.as_view(template_name='news_app/password_reset_done.html'), name='password_reset_done'),
+    path('reset/<uidb64>/<token>/', auth_views.PasswordResetConfirmView.as_view(template_name='news_app/password_reset_confirm.html'), name='password_reset_confirm'),
+    path('reset/done/', auth_views.PasswordResetCompleteView.as_view(template_name='news_app/password_reset_complete.html'), name='password_reset_complete'),
 ] + static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)

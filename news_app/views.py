@@ -133,6 +133,7 @@ def add_thread(request):
 
 from django.contrib import messages
 
+
 def sign_in(request):
     signup_form = SignUpForm()  
     login_form = AuthenticationForm()  

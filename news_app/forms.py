@@ -4,6 +4,7 @@ from django.contrib.auth.models import User
 from django.contrib.auth.forms import UserCreationForm
 from django_select2.forms import Select2MultipleWidget
 from news_app.models import Tag
+from django.core.exceptions import ValidationError
 
 
 
@@ -23,6 +24,11 @@ class SignUpForm(UserCreationForm):
         model = User
         fields = ('username', 'email', 'password1', 'password2', )
 
+    def clean_email(self):
+        email = self.cleaned_data.get('email')
+        if User.objects.filter(email=email).exists():
+            raise ValidationError("Пользователь с таким email уже существует.")
+        return email
 class CommentForm(forms.ModelForm):
     parent_id = forms.IntegerField(widget=forms.HiddenInput, required=False)
 
