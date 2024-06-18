@@ -14,10 +14,10 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ukw_3@w8xlx6jeh5$4fp45s(%-
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
 
-ALLOWED_HOSTS = ['newsandthreads-production.up.railway.app','localhost', '127.0.0.1']
-CSRF_TRUSTED_ORIGINS = ["https://newsandthreads-production.up.railway.app"]
-CORS_ALLOWED_ORIGINS = ["https://newsandthreads-production.up.railway.app"]
-SECURE_CROSS_ORIGIN_OPENER_POLICY = ["https://newsandthreads-production.up.railway.app"]
+ALLOWED_HOSTS = ['newsandthreads-production.up.railway.app', 'localhost', '127.0.0.1', '31.128.39.77', '31.128.39.77:8000']
+CSRF_TRUSTED_ORIGINS = ["https://newsandthreads-production.up.railway.app", "http://31.128.39.77:8000"]
+CORS_ALLOWED_ORIGINS = ["https://newsandthreads-production.up.railway.app", "http://31.128.39.77:8000"]
+SECURE_CROSS_ORIGIN_OPENER_POLICY = None  # Вы можете изменить эту политику в зависимости от вашего проекта
 
 
 
@@ -80,14 +80,13 @@ WSGI_APPLICATION = "news_portal.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.environ.get('POSTGRES_DB', 'default_db'),
-        'USER': os.environ.get('POSTGRES_USER', 'cloud_user'),
-        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'vN%rJ3w4d9au'),
-        'HOST': os.environ.get('DB_HOST', 'ninakakru.beget.app'),
-        'PORT': os.environ.get('DB_PORT', '5432'),
+        'NAME': 'default_db',
+        'USER': 'cloud_user',
+        'PASSWORD': 'vN%rJ3w4d9au',
+        'HOST': 'db',
+        'PORT': '5432',
     }
 }
-
 # DATABASES = {
 #     'default': dj_database_url.config(default='postgresql://postgres:ULwnFTCOICiDxMliVFJviEOnxpojNLeX@roundhouse.proxy.rlwy.net:33080/railway')
     
