@@ -13,10 +13,23 @@ SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-ukw_3@w8xlx6jeh5$4fp45s(%-
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv('DEBUG', 'True') == 'True'
+ALLOWED_HOSTS = [
+    'newsandthreads-production.up.railway.app', 
+    'localhost', 
+    '127.0.0.1', 
+    '31.128.39.77',
+    '31.128.39.77:8000'
+]
 
-ALLOWED_HOSTS = ['newsandthreads-production.up.railway.app', 'localhost', '127.0.0.1', '31.128.39.77', '31.128.39.77:8000']
-CSRF_TRUSTED_ORIGINS = ["https://newsandthreads-production.up.railway.app", "http://31.128.39.77:8000"]
-CORS_ALLOWED_ORIGINS = ["https://newsandthreads-production.up.railway.app", "http://31.128.39.77:8000"]
+CSRF_TRUSTED_ORIGINS = [
+    "https://newsandthreads-production.up.railway.app", 
+    "http://31.128.39.77"
+]
+
+CORS_ALLOWED_ORIGINS = [
+    "https://newsandthreads-production.up.railway.app", 
+    "http://31.128.39.77"
+]
 SECURE_CROSS_ORIGIN_OPENER_POLICY = None  # Вы можете изменить эту политику в зависимости от вашего проекта
 
 
