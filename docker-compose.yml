@@ -1,35 +1,33 @@
 version: '3.8'
 
 services:
-  db:
-    image: postgres:13
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-    container_name: myproject-db-1  
-
   web:
     build: .
-    command: >
-      sh -c "python manage.py migrate &&
-             python manage.py collectstatic --noinput &&
-             gunicorn news_portal.wsgi:application --bind 0.0.0.0:8000"
+    command: gunicorn myProject.wsgi:application --bind 0.0.0.0:8000
     volumes:
       - .:/app
     ports:
       - "8000:8000"
+    environment:
+      POSTGRES_DB: default_db
+      POSTGRES_USER: cloud_user
+      POSTGRES_PASSWORD: vN%rJ3w4d9au
+      DB_HOST: ninakakru.beget.app
+      DB_PORT: 5432
     depends_on:
       - db
+
+  db:
+    image: postgres
+    restart: always
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      DB_HOST: myproject-db-1  
-      DB_PORT: ${DB_PORT}
+      POSTGRES_DB: default_db
+      POSTGRES_USER: cloud_user
+      POSTGRES_PASSWORD: vN%rJ3w4d9au
+      DB_HOST: ninakakru.beget.app
+      DB_PORT: 5432
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
 
 volumes:
   postgres_data:
-

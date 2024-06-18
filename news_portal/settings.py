@@ -80,11 +80,11 @@ WSGI_APPLICATION = "news_portal.wsgi.application"
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
-        'NAME': os.getenv('POSTGRES_DB', 'django'),
-        'USER': os.getenv('POSTGRES_USER', 'django_admin'),
-        'PASSWORD': os.getenv('POSTGRES_PASSWORD', 'goodlife29ABC'),
-        'HOST': os.getenv('DB_HOST', 'myproject-db-1'),
-        'PORT': os.getenv('DB_PORT', '5432'),
+        'NAME': os.environ.get('POSTGRES_DB', 'default_db'),
+        'USER': os.environ.get('POSTGRES_USER', 'cloud_user'),
+        'PASSWORD': os.environ.get('POSTGRES_PASSWORD', 'vN%rJ3w4d9au'),
+        'HOST': os.environ.get('DB_HOST', 'ninakakru.beget.app'),
+        'PORT': os.environ.get('DB_PORT', '5432'),
     }
 }
 
