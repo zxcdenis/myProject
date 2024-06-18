@@ -11,17 +11,17 @@ WORKDIR /app
 COPY . /app
 
 # Устанавливаем зависимости
-RUN pip install gunicorn
-
 RUN pip install --upgrade pip
+RUN pip install gunicorn
+RUN pip install psycopg2-binary
 RUN pip install -r requirements.txt
 
 
 RUN python manage.py collectstatic --noinput
 
 # Открываем порт для приложения
-EXPOSE $PORT
+EXPOSE 8000
 
 # Запускаем сервер Django
-CMD ["sh", "-c", "gunicorn news_portal.wsgi:application --bind 0.0.0.0:$PORT"]
+CMD ["gunicorn", "myProject.wsgi:application", "--bind", "0.0.0.0:8000"]
 
