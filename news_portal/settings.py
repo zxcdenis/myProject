@@ -96,7 +96,7 @@ DATABASES = {
         'NAME': 'default_db',
         'USER': 'cloud_user',
         'PASSWORD': 'vN%rJ3w4d9au',
-        'HOST': 'db',
+        'HOST': 'ninakakru.beget.app',
         'PORT': '5432',
     }
 }
